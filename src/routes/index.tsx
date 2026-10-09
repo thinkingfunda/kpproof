@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Shell, inputCls, labelCls, btnCls } from "@/components/Shell";
 import { useParties, useEntries, todayISO } from "@/lib/store";
+import { useServerFn } from "@tanstack/react-start";
+import { signUpload } from "@/lib/cloudinary.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,12 +47,31 @@ function NewEntry() {
   const onFile = async (f?: File) => { if (f) setImage(await compress(f)); };
   const valid = partyId && vehicle.trim() && Number(litres) > 0 && Number(amount) > 0;
 
-  const save = () => {
+  const sign = useServerFn(signUpload);
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
     const p = parties.find((x) => x.id === partyId)!;
-    setEntries([{ id: crypto.randomUUID(), date, partyId, partyName: p.name, vehicle: vehicle.trim().toUpperCase(),
-      litres: Number(litres), amount: Number(amount), image, createdAt: Date.now() }, ...entries]);
-    setVehicle(""); setLitres(""); setAmount(""); setImage(undefined); setDate(todayISO());
-    setMsg("Entry saved ✓"); setTimeout(() => setMsg(""), 2500);
+    const v = vehicle.trim().toUpperCase();
+    setBusy(true);
+    try {
+      let url: string | undefined;
+      if (image) {
+        const s = await sign({ data: { partyName: p.name, date, vehicle: v } });
+        const fd = new FormData();
+        fd.append("file", image); fd.append("api_key", s.apiKey); fd.append("timestamp", String(s.timestamp));
+        fd.append("folder", s.folder); fd.append("public_id", s.public_id); fd.append("signature", s.signature);
+        const r = await fetch(`https://api.cloudinary.com/v1_1/${s.cloud}/image/upload`, { method: "POST", body: fd });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j?.error?.message || "Upload failed");
+        url = j.secure_url;
+      }
+      setEntries([{ id: crypto.randomUUID(), date, partyId, partyName: p.name, vehicle: v,
+        litres: Number(litres), amount: Number(amount), image: url, createdAt: Date.now() }, ...entries]);
+      setVehicle(""); setLitres(""); setAmount(""); setImage(undefined); setDate(todayISO());
+      setMsg("Entry saved ✓");
+    } catch (e) {
+      setMsg("Error: " + (e as Error).message);
+    } finally { setBusy(false); setTimeout(() => setMsg(""), 3500); }
   };
 
   return (
@@ -86,7 +107,7 @@ function NewEntry() {
               <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} /></label>
           </div>
         )}</div>
-      <button className={btnCls} disabled={!valid} onClick={save}>Save Entry</button>
+      <button className={btnCls} disabled={!valid || busy} onClick={save}>{busy ? "Uploading…" : "Save Entry"}</button>
       {msg && <p className="text-center font-semibold text-primary">{msg}</p>}
     </Shell>
   );
