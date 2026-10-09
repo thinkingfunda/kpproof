@@ -14,7 +14,169 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fuel_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          entry_date: string
+          id: string
+          image: string | null
+          litres: number
+          ocr: Json | null
+          party_id: string | null
+          party_name: string
+          product_id: string | null
+          product_name: string | null
+          rate: number | null
+          shift: string | null
+          signature: string | null
+          vehicle: string
+          verified: boolean
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          entry_date: string
+          id?: string
+          image?: string | null
+          litres: number
+          ocr?: Json | null
+          party_id?: string | null
+          party_name: string
+          product_id?: string | null
+          product_name?: string | null
+          rate?: number | null
+          shift?: string | null
+          signature?: string | null
+          vehicle: string
+          verified?: boolean
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          entry_date?: string
+          id?: string
+          image?: string | null
+          litres?: number
+          ocr?: Json | null
+          party_id?: string | null
+          party_name?: string
+          product_id?: string | null
+          product_name?: string | null
+          rate?: number | null
+          shift?: string | null
+          signature?: string | null
+          vehicle?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
+      parties: {
+        Row: {
+          active: boolean
+          created_at: string
+          credit_limit: number | null
+          id: string
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          credit_limit?: number | null
+          id?: string
+          name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          credit_limit?: number | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      product_rates: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          rate: number
+          rate_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          rate: number
+          rate_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          rate?: number
+          rate_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_rates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          id: string
+          number: string
+          party_id: string | null
+          tank_capacity: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          number: string
+          party_id?: string | null
+          tank_capacity?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          number?: string
+          party_id?: string | null
+          tank_capacity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
