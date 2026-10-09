@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 export type Party = { id: string; name: string; active: boolean; phone?: string };
 export type Entry = {
   id: string; date: string; partyId: string; partyName: string;
-  vehicle: string; litres: number; amount: number; image?: string; createdAt: number;
+  vehicle: string; litres: number; amount: number; image?: string | undefined; createdAt: number;
 };
 
 const PK = "fl_parties", EK = "fl_entries";
