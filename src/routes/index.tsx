@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Shell, inputCls, labelCls, btnCls } from "@/components/Shell";
-import { useParties, useEntries, todayISO } from "@/lib/store";
+import { useParties, useEntries, useProducts, useVehicles, rateOn, todayISO } from "@/lib/store";
 import { useServerFn } from "@tanstack/react-start";
 import { signUpload } from "@/lib/cloudinary.functions";
 
@@ -42,7 +42,17 @@ function NewEntry() {
   const [amount, setAmount] = useState("");
   const [image, setImage] = useState<string>();
   const [msg, setMsg] = useState("");
-  const recent = [...new Set(entries.map((e) => e.vehicle))].slice(0, 4);
+  const [products] = useProducts();
+  const [vehicles] = useVehicles();
+  const [productId, setProductId] = useState("");
+  const product = products.find((p) => p.id === productId);
+  const rate = product ? rateOn(product.rates, date) : undefined;
+  useEffect(() => { if (!productId && products.length === 1) setProductId(products[0]!.id); }, [products, productId]);
+  useEffect(() => {
+    if (rate !== undefined && Number(litres) > 0) setAmount((Number(litres) * rate).toFixed(2));
+  }, [rate, litres]);
+  const partyVeh = vehicles.filter((v) => v.partyId === partyId).map((v) => v.number);
+  const chips = [...new Set([...partyVeh, ...entries.map((e) => e.vehicle)])].slice(0, 6);
 
   const onFile = async (f?: File) => { if (f) setImage(await compress(f)); };
   const valid = partyId && vehicle.trim() && Number(litres) > 0 && Number(amount) > 0;
@@ -66,7 +76,8 @@ function NewEntry() {
         url = j.secure_url;
       }
       setEntries([{ id: crypto.randomUUID(), date, partyId, partyName: p.name, vehicle: v,
-        litres: Number(litres), amount: Number(amount), image: url, createdAt: Date.now() }, ...entries]);
+        litres: Number(litres), amount: Number(amount), image: url, createdAt: Date.now(),
+        productId: product?.id, productName: product?.name, rate }, ...entries]);
       setVehicle(""); setLitres(""); setAmount(""); setImage(undefined); setDate(todayISO());
       setMsg("Entry saved ✓");
     } catch (e) {
@@ -84,17 +95,24 @@ function NewEntry() {
           {active.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select></div>
       <div><label className={labelCls}>Vehicle No</label>
-        <input className={`${inputCls} uppercase`} placeholder="MH12AB1234" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
-        {recent.length > 0 && <div className="mt-2 flex flex-wrap gap-2">
-          {recent.map((v) => <button key={v} onClick={() => setVehicle(v)} className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">{v}</button>)}
+        <input list="veh-list" className={`${inputCls} uppercase`} placeholder="MH12AB1234" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
+        <datalist id="veh-list">{vehicles.map((v) => <option key={v.id} value={v.number} />)}</datalist>
+        {chips.length > 0 && <div className="mt-2 flex flex-wrap gap-2">
+          {chips.map((v) => <button key={v} onClick={() => setVehicle(v)} className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">{v}</button>)}
         </div>}</div>
+      <div><label className={labelCls}>Product</label>
+        <select className={inputCls} value={productId} onChange={(e) => setProductId(e.target.value)}>
+          <option value="">Select product</option>
+          {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        {product && <p className="mt-1 text-sm font-semibold text-primary">
+          {rate !== undefined ? `Rate on this date: ₹${rate.toFixed(2)}/L` : "No rate set for this date — add one in Masters"}</p>}</div>
       <div className="grid grid-cols-2 gap-3">
         <div><label className={labelCls}>Ltr</label>
           <input type="number" inputMode="decimal" className={inputCls} value={litres} onChange={(e) => setLitres(e.target.value)} /></div>
         <div><label className={labelCls}>Amount (₹)</label>
           <input type="number" inputMode="decimal" className={inputCls} value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
       </div>
-      {Number(litres) > 0 && Number(amount) > 0 && <p className="text-sm text-muted-foreground">Rate: ₹{(Number(amount) / Number(litres)).toFixed(2)}/L</p>}
       <div><label className={labelCls}>Attach / Capture Image</label>
         {image ? (
           <div className="relative"><img src={image} alt="Receipt" className="w-full rounded-lg border" />
