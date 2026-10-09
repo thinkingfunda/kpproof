@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { useEntries, inr } from "@/lib/store";
+import { TotalsTable } from "@/components/TotalsTable";
+import { groupTotals, monthKey, monthLabel, shiftKey } from "@/lib/totals";
 
 export const Route = createFileRoute("/history")({
   head: () => ({
@@ -25,6 +27,8 @@ function History() {
         <div><p className="text-xs text-muted-foreground">Litres</p><p className="font-bold">{L.toFixed(1)}</p></div>
         <div><p className="text-xs text-muted-foreground">Amount</p><p className="font-bold">{inr(A)}</p></div>
       </div>
+      <TotalsTable title="Monthly totals" rows={groupTotals(entries, monthKey).sort((a, b) => b.key.localeCompare(a.key))} label={monthLabel} />
+      <TotalsTable title="Shift-wise totals" rows={groupTotals(entries, shiftKey)} label={(k) => k} />
       {entries.length === 0 && <p className="text-center text-muted-foreground">No entries yet.</p>}
       {entries.map((e) => (
         <div key={e.id} className="flex gap-3 rounded-lg border bg-card p-3">
