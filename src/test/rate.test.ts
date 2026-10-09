@@ -19,3 +19,10 @@ describe("rateOn", () => {
     expect(rateOn(rates, "2026-05-04")).toBeUndefined();
   });
 });
+
+import { isVerified } from "@/lib/store";
+describe("isVerified", () => {
+  it("verified when slip litres and amount match", () => expect(isVerified({ litres: 150, amount: 14175 }, { litres: 150, amount: 14175 })).toBe(true));
+  it("not verified when amount differs", () => expect(isVerified({ litres: 150, amount: 14175 }, { litres: 150, amount: 13000 })).toBe(false));
+  it("not verified without OCR", () => expect(isVerified({ litres: 150, amount: 14175 }, null)).toBe(false));
+});

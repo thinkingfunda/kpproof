@@ -9,6 +9,7 @@ export type Entry = {
   vehicle: string; litres: number; amount: number; image?: string | undefined; createdAt: number;
   productId?: string | undefined; productName?: string | undefined; rate?: number | undefined;
   signature?: string | undefined; shift?: string | undefined;
+  ocr?: { litres: number | null; amount: number | null; date: string | null } | undefined; verified?: boolean | undefined;
 };
 
 const seed: Party[] = [
@@ -51,3 +52,10 @@ export const fmtDate = (iso: string) => {
   return `${d}-${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][Number(m) - 1]}-${y}`;
 };
 export const inr = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Entry is verified when slip OCR litres and amount both match the saved entry (±1%). */
+export function isVerified(e: { litres: number; amount: number }, ocr?: { litres: number | null; amount: number | null } | null) {
+  if (!ocr || ocr.litres == null || ocr.amount == null) return false;
+  const near = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.05, b * 0.01);
+  return near(ocr.litres, e.litres) && near(ocr.amount, e.amount);
+}
