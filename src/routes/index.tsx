@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Shell, inputCls, labelCls, btnCls } from "@/components/Shell";
-import { useParties, useEntries, useProducts, useVehicles, rateOn, todayISO, inr, fmtDate } from "@/lib/store";
+import { useParties, useEntries, useProducts, useVehicles, rateOn, todayISO, inr, fmtDate, isVerified } from "@/lib/store";
 import { useServerFn } from "@tanstack/react-start";
 import { signUpload } from "@/lib/cloudinary.functions";
+import { readSlip, type OcrResult } from "@/lib/ocr.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -81,6 +82,10 @@ function NewEntry() {
   const [productId, setProductId] = useState("");
   const [busy, setBusy] = useState(false);
   const sign = useServerFn(signUpload);
+  const ocrFn = useServerFn(readSlip);
+  const [ocr, setOcr] = useState<OcrResult>();
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrMsg, setOcrMsg] = useState("");
 
   useEffect(() => { setNow(new Date()); const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t); }, []);
   const product = products.find((p) => p.id === productId);
@@ -98,7 +103,24 @@ function NewEntry() {
   const tank = vehicles.find((v) => v.number === vehicle.trim().toUpperCase())?.tankCapacity;
   const addL = (n: number) => setLitres(String(+((Number(litres) || 0) + n).toFixed(2)));
 
-  const onFile = async (f?: File) => { if (f) setImage(await compress(f)); };
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const onFile = async (f?: File) => {
+    if (!f) return;
+    const img = await compress(f); setImage(img); setOcr(undefined);
+    setOcrBusy(true); setOcrMsg("Reading slip…");
+    try {
+      const r = await ocrFn({ data: { image: img, parties: active.map((p) => p.name), products: products.map((p) => p.name) } });
+      if (!r.result) { setOcrMsg(r.error ?? "Could not read slip"); return; }
+      const o = r.result; setOcr(o);
+      const filled: string[] = [];
+      if (o.date && /^\d{4}-\d{2}-\d{2}$/.test(o.date)) { setDate(o.date); filled.push("Date"); }
+      if (o.partyName) { const m = active.find((p) => norm(p.name).includes(norm(o.partyName!)) || norm(o.partyName!).includes(norm(p.name))); if (m) { setPartyId(m.id); filled.push("Party"); } }
+      if (o.product) { const m = products.find((p) => norm(p.name).includes(norm(o.product!)) || norm(o.product!).includes(norm(p.name))); if (m) { setProductId(m.id); filled.push("Product"); } }
+      if (o.litres) { setLitres(String(o.litres)); filled.push("Ltr"); }
+      if (o.amount) { setTimeout(() => setAmount(String(o.amount)), 0); filled.push("Amount"); }
+      setOcrMsg(filled.length ? `Auto-filled from slip: ${filled.join(", ")}` : "Nothing readable on slip");
+    } catch (e) { setOcrMsg("Error: " + (e as Error).message); } finally { setOcrBusy(false); }
+  };
   const valid = partyId && vehicle.trim() && Number(litres) > 0 && Number(amount) > 0 && signature && ack;
 
   const upload = async (file: string, partyName: string, v: string) => {
@@ -122,10 +144,12 @@ function NewEntry() {
       const at = new Date();
       setEntries([{ id: crypto.randomUUID(), date, partyId, partyName: p.name, vehicle: v,
         litres: Number(litres), amount: Number(amount), image: url, createdAt: at.getTime(),
-        productId: product?.id, productName: product?.name, rate, signature: sigUrl, shift: shiftOf(at.getHours()) }, ...entries]);
+        productId: product?.id, productName: product?.name, rate, signature: sigUrl, shift: shiftOf(at.getHours()),
+        ocr: ocr ? { litres: ocr.litres, amount: ocr.amount, date: ocr.date } : undefined,
+        verified: isVerified({ litres: Number(litres), amount: Number(amount) }, ocr) }, ...entries]);
       setVehicle(""); setLitres(""); setAmount(""); setImage(undefined); setDate(todayISO());
-      setSignature(undefined); setAck(false); setSigKey((k) => k + 1);
-      setMsg(`Entry saved ✓ ${timeStr(at)}`);
+      setSignature(undefined); setAck(false); setOcr(undefined); setOcrMsg(""); setSigKey((k) => k + 1);
+      setMsg(`Entry saved ✓ ${timeStr(at)}${isVerified({ litres: Number(litres), amount: Number(amount) }, ocr) ? " · Verified" : ""}`);
     } catch (e) {
       setMsg("Error: " + (e as Error).message);
     } finally { setBusy(false); setTimeout(() => setMsg(""), 3500); }
@@ -184,7 +208,7 @@ function NewEntry() {
       <div><label className={labelCls}>Meter / Slip Photo</label>
         {image ? (
           <div className="relative"><img src={image} alt="Receipt" className="w-full rounded-lg border" />
-            <button onClick={() => setImage(undefined)} className="absolute right-2 top-2 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground">Remove</button></div>
+            <button onClick={() => { setImage(undefined); setOcr(undefined); setOcrMsg(""); }} className="absolute right-2 top-2 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground">Remove</button></div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <label className="cursor-pointer rounded-lg border-2 border-dashed border-primary p-4 text-center text-sm font-semibold text-primary">📷 Capture
@@ -192,14 +216,17 @@ function NewEntry() {
             <label className="cursor-pointer rounded-lg border-2 border-dashed border-input p-4 text-center text-sm font-semibold text-muted-foreground">🖼️ Attach
               <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} /></label>
           </div>
-        )}</div>
+        )}
+        {ocrMsg && <p className={`mt-1 text-sm font-semibold ${ocrBusy ? "text-muted-foreground" : "text-primary"}`}>{ocrMsg}</p>}
+        {ocr && !ocrBusy && <p className={`text-xs font-bold ${isVerified({ litres: Number(litres), amount: Number(amount) }, ocr) ? "text-primary" : "text-destructive"}`}>
+          {isVerified({ litres: Number(litres), amount: Number(amount) }, ocr) ? "✓ Matches slip — will be Verified" : "⚠ Litres/Amount differ from slip — will be Unverified"}</p>}</div>
       <div><label className={labelCls}>Driver Signature</label>
         <SignaturePad key={sigKey} onChange={setSignature} /></div>
       <label className="flex items-start gap-3 rounded-lg bg-secondary p-3 text-sm text-secondary-foreground">
         <input type="checkbox" className="mt-0.5 h-5 w-5 accent-primary" checked={ack} onChange={(e) => setAck(e.target.checked)} />
         <span>Driver confirms {litres || "—"} L{product ? ` of ${product.name}` : ""} received for {vehicle.toUpperCase() || "vehicle"}{now ? ` at ${timeStr(now)} on ${fmtDate(date)}` : ""}.</span>
       </label>
-      <button className={btnCls} disabled={!valid || busy} onClick={save}>{busy ? "Uploading…" : "Save Entry"}</button>
+      <button className={btnCls} disabled={!valid || busy || ocrBusy} onClick={save}>{busy ? "Uploading…" : "Save Entry"}</button>
       {msg && <p className="text-center font-semibold text-primary">{msg}</p>}
     </Shell>
   );
