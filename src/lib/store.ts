@@ -14,7 +14,7 @@ export type Entry = {
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-type Row = Record<string, any>;
+type Row = any;
 const db = supabase as any;
 const un = <T,>(v: T | null | undefined) => (v === null ? undefined : v) as T | undefined;
 const num = (v: any) => (v == null ? undefined : Number(v));
@@ -47,7 +47,7 @@ async function sync(table: string, prev: Row[], next: Row[]) {
   if (del.length) { const { error } = await db.from(table).delete().in("id", del); if (error) throw error; }
   if (up.length) { const { error } = await db.from(table).upsert(up); if (error) throw error; }
 }
-const must = <T,>({ data, error }: { data: T; error: any }) => { if (error) throw error; return data; };
+const must = ({ data, error }: { data: any; error: any }): any => { if (error) throw error; return data; };
 
 const partyRow = (p: Party) => ({ id: p.id, name: p.name, active: p.active, credit_limit: p.creditLimit ?? null });
 export const useParties = () => useLive<Party>(["parties"],
