@@ -26,3 +26,12 @@ describe("isVerified", () => {
   it("not verified when amount differs", () => expect(isVerified({ litres: 150, amount: 14175 }, { litres: 150, amount: 13000 })).toBe(false));
   it("not verified without OCR", () => expect(isVerified({ litres: 150, amount: 14175 }, null)).toBe(false));
 });
+
+import { groupTotals, monthKey } from "@/lib/totals";
+describe("groupTotals", () => {
+  it("sums litres, amount and verified per month", () => {
+    const e = (date: string, l: number, a: number, v: boolean) => ({ id: date + l, date, partyId: "", partyName: "", vehicle: "", litres: l, amount: a, createdAt: 0, verified: v });
+    const [t] = groupTotals([e("2026-05-05", 10, 950, true), e("2026-05-30", 20, 1900, false)], monthKey);
+    expect(t).toMatchObject({ key: "2026-05", count: 2, litres: 30, amount: 2850, verified: 1 });
+  });
+});

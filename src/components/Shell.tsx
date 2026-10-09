@@ -13,6 +13,7 @@ export function Shell({ title, children }: { title: string; children: ReactNode 
       <nav className="fixed bottom-0 left-1/2 flex w-full max-w-md -translate-x-1/2 border-t bg-card">
         <Link to="/" className={tab} activeProps={{ className: "text-primary" }} activeOptions={{ exact: true }}>⛽ New Entry</Link>
         <Link to="/parties" className={tab} activeProps={{ className: "text-primary" }}>🗂️ Masters</Link>
+        <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary" }}>📊 Dashboard</Link>
         <Link to="/history" className={tab} activeProps={{ className: "text-primary" }}>📋 History</Link>
       </nav>
     </div>
