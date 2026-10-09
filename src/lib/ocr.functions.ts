@@ -33,7 +33,7 @@ export const readSlip = createServerFn({ method: "POST" })
         include: ["reasoning.encrypted_content"],
         text: { format: { type: "json_schema", name: "fuel_slip", strict: true, schema } },
         input: [
-          { role: "system", content: "You read Indian fuel pump meter displays and fuel slips/receipts. Extract fields; use null when not visible. If a party name is visible, return the closest match from the known parties list. Product should match the known products list when possible." },
+          { role: "system", content: "You read Indian fuel pump meter displays and fuel slips/receipts. Extract fields; use null when not visible. Dates on slips are Indian DD/MM/YYYY; return YYYY-MM-DD. If a party name is visible, return the closest match from the known parties list. Product should match the known products list when possible." },
           { role: "user", content: [
             { type: "input_text", text: `Known parties: ${data.parties.join("; ") || "none"}\nKnown products: ${data.products.join("; ") || "none"}` },
             { type: "input_image", image_url: data.image },
