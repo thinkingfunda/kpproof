@@ -39,26 +39,30 @@ function Masters() {
 function PartyMaster() {
   const [parties, setParties] = useParties();
   const [name, setName] = useState("");
+  const [limit, setLimit] = useState("");
   const [editId, setEditId] = useState<string>();
   const submit = () => {
     if (!name.trim()) return;
-    if (editId) setParties(parties.map((p) => p.id === editId ? { ...p, name: name.trim() } : p));
-    else setParties([...parties, { id: crypto.randomUUID(), name: name.trim(), active: true }]);
-    setName(""); setEditId(undefined);
+    const creditLimit = Number(limit) > 0 ? Number(limit) : undefined;
+    if (editId) setParties(parties.map((p) => p.id === editId ? { ...p, name: name.trim(), creditLimit } : p));
+    else setParties([...parties, { id: crypto.randomUUID(), name: name.trim(), active: true, creditLimit }]);
+    setName(""); setLimit(""); setEditId(undefined);
   };
   return (
     <>
       <div className="flex gap-2">
         <input className={inputCls} placeholder="Party name" value={name} onChange={(e) => setName(e.target.value)} />
-        <button className={`${btnCls} w-28`} onClick={submit}>{editId ? "Update" : "Add"}</button>
+        <input type="number" inputMode="decimal" className={`${inputCls} w-32`} placeholder="Credit ₹" value={limit} onChange={(e) => setLimit(e.target.value)} />
       </div>
+      <button className={btnCls} onClick={submit}>{editId ? "Update Party" : "Add Party"}</button>
       {parties.map((p) => (
         <div key={p.id} className="flex items-center gap-2 rounded-lg border bg-card p-3">
-          <span className="flex-1 font-semibold text-card-foreground">{p.name}</span>
+          <div className="flex-1"><p className="font-semibold text-card-foreground">{p.name}</p>
+            <p className="text-xs text-muted-foreground">{p.creditLimit ? `Credit limit ${inr(p.creditLimit)}` : "No credit limit"}</p></div>
           <button onClick={() => setParties(parties.map((x) => x.id === p.id ? { ...x, active: !x.active } : x))}
             className={`${smBtn} ${p.active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
             {p.active ? "Active" : "Inactive"}</button>
-          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(p.id); setName(p.name); }}>Edit</button>
+          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(p.id); setName(p.name); setLimit(p.creditLimit ? String(p.creditLimit) : ""); }}>Edit</button>
           <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete party?") && setParties(parties.filter((x) => x.id !== p.id))}>Delete</button>
         </div>
       ))}
@@ -146,13 +150,14 @@ function VehicleMaster() {
   const [parties] = useParties();
   const [num, setNum] = useState("");
   const [partyId, setPartyId] = useState("");
+  const [tank, setTank] = useState("");
   const [editId, setEditId] = useState<string>();
   const submit = () => {
     const n = num.trim().toUpperCase();
     if (!n) return;
-    const v = { id: editId ?? crypto.randomUUID(), number: n, partyId: partyId || undefined };
+    const v = { id: editId ?? crypto.randomUUID(), number: n, partyId: partyId || undefined, tankCapacity: Number(tank) > 0 ? Number(tank) : undefined };
     setVehicles(editId ? vehicles.map((x) => x.id === editId ? v : x) : [...vehicles, v]);
-    setNum(""); setPartyId(""); setEditId(undefined);
+    setNum(""); setPartyId(""); setTank(""); setEditId(undefined);
   };
   return (
     <>
@@ -161,14 +166,15 @@ function VehicleMaster() {
         <option value="">Party (optional)</option>
         {parties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select>
+      <input type="number" inputMode="decimal" className={inputCls} placeholder="Tank capacity (L, optional)" value={tank} onChange={(e) => setTank(e.target.value)} />
       <button className={btnCls} onClick={submit}>{editId ? "Update Vehicle" : "Add Vehicle"}</button>
       {vehicles.map((v) => (
         <div key={v.id} className="flex items-center gap-2 rounded-lg border bg-card p-3">
           <div className="flex-1">
             <p className="font-semibold text-card-foreground">{v.number}</p>
-            <p className="text-xs text-muted-foreground">{parties.find((p) => p.id === v.partyId)?.name ?? "—"}</p>
+            <p className="text-xs text-muted-foreground">{parties.find((p) => p.id === v.partyId)?.name ?? "—"}{v.tankCapacity ? ` · Tank ${v.tankCapacity} L` : ""}</p>
           </div>
-          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(v.id); setNum(v.number); setPartyId(v.partyId ?? ""); }}>Edit</button>
+          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(v.id); setNum(v.number); setPartyId(v.partyId ?? ""); setTank(v.tankCapacity ? String(v.tankCapacity) : ""); }}>Edit</button>
           <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete vehicle?") && setVehicles(vehicles.filter((x) => x.id !== v.id))}>Delete</button>
         </div>
       ))}
