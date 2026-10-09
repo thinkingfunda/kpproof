@@ -3,11 +3,11 @@ import { useEffect, useState, useCallback } from "react";
 export type Party = { id: string; name: string; active: boolean; phone?: string };
 export type RateRow = { id: string; date: string; rate: number };
 export type Product = { id: string; name: string; rates: RateRow[] };
-export type Vehicle = { id: string; number: string; partyId?: string };
+export type Vehicle = { id: string; number: string; partyId?: string | undefined };
 export type Entry = {
   id: string; date: string; partyId: string; partyName: string;
   vehicle: string; litres: number; amount: number; image?: string | undefined; createdAt: number;
-  productId?: string; productName?: string; rate?: number;
+  productId?: string | undefined; productName?: string | undefined; rate?: number | undefined;
 };
 
 const seed: Party[] = [
