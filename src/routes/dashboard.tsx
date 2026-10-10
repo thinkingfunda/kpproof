@@ -48,7 +48,7 @@ function Dashboard() {
         <Stat label="This month · Litres" icon="solar:calendar-bold-duotone" value={mo.l.toFixed(1)} sub={`${mo.n} entries`} />
         <Stat label="This month · Amount" icon="solar:card-bold-duotone" value={inr(mo.a)} />
         <Stat label="All time · Litres" icon="solar:graph-up-bold-duotone" value={all.l.toFixed(1)} />
-        <Stat label="All time · Amount" icon="solar:dollar-minimalistic-bold-duotone" value={inr(all.a)} />
+        <Stat label="All time · Amount" icon="mdi:currency-inr" value={inr(all.a)} />
       </div>
       <div className="rounded-2xl bg-card shadow-card p-3">
         <div className="flex justify-between text-sm"><span className="flex items-center gap-2 font-bold"><Icon icon="solar:verified-check-bold-duotone" className="h-5 w-5 text-success" />Verified entries</span><span className="font-bold text-primary">{all.v} / {all.n} ({pct}%)</span></div>
