@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { TotalsTable } from "@/components/TotalsTable";
@@ -18,12 +19,15 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function Stat({ label, value, sub, icon }: { label: string; value: string; sub?: string; icon: string }) {
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="flex items-center gap-3 rounded-2xl bg-card p-4 shadow-card">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"><Icon icon={icon} className="h-7 w-7" /></span>
+      <div className="min-w-0">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-bold text-card-foreground tabular-nums">{value}</p>
+      <p className="truncate text-lg font-bold text-card-foreground tabular-nums">{value}</p>
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+      </div>
     </div>
   );
 }
@@ -38,17 +42,17 @@ function Dashboard() {
   const parties = groupTotals(entries.filter((e) => e.date.startsWith(month)), (e) => e.partyName).sort((a, b) => b.amount - a.amount);
   return (
     <Shell title="Dashboard">
-      <div className="grid grid-cols-2 gap-3">
-        <Stat label="Today · Litres" value={td.l.toFixed(1)} sub={`${td.n} entries`} />
-        <Stat label="Today · Amount" value={inr(td.a)} />
-        <Stat label="This month · Litres" value={mo.l.toFixed(1)} sub={`${mo.n} entries`} />
-        <Stat label="This month · Amount" value={inr(mo.a)} />
-        <Stat label="All time · Litres" value={all.l.toFixed(1)} />
-        <Stat label="All time · Amount" value={inr(all.a)} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Stat label="Today · Litres" icon="solar:gas-station-bold-duotone" value={td.l.toFixed(1)} sub={`${td.n} entries`} />
+        <Stat label="Today · Amount" icon="solar:wallet-money-bold-duotone" value={inr(td.a)} />
+        <Stat label="This month · Litres" icon="solar:calendar-bold-duotone" value={mo.l.toFixed(1)} sub={`${mo.n} entries`} />
+        <Stat label="This month · Amount" icon="solar:card-bold-duotone" value={inr(mo.a)} />
+        <Stat label="All time · Litres" icon="solar:graph-up-bold-duotone" value={all.l.toFixed(1)} />
+        <Stat label="All time · Amount" icon="mdi:currency-inr" value={inr(all.a)} />
       </div>
-      <div className="rounded-lg border bg-card p-3">
-        <div className="flex justify-between text-sm"><span className="font-bold">Verified entries</span><span className="font-bold text-primary">{all.v} / {all.n} ({pct}%)</span></div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary" style={{ width: `${pct}%` }} /></div>
+      <div className="rounded-2xl bg-card shadow-card p-3">
+        <div className="flex justify-between text-sm"><span className="flex items-center gap-2 font-bold"><Icon icon="solar:verified-check-bold-duotone" className="h-5 w-5 text-success" />Verified entries</span><span className="font-bold text-primary">{all.v} / {all.n} ({pct}%)</span></div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-success" style={{ width: `${pct}%` }} /></div>
       </div>
       <TotalsTable title="This month by shift" rows={groupTotals(entries.filter((e) => e.date.startsWith(month)), shiftKey)} label={(k) => k} />
       <TotalsTable title="This month by party" rows={parties} label={(k) => k} />
