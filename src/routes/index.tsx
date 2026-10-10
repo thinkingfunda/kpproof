@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Shell, inputCls, labelCls, btnCls } from "@/components/Shell";
@@ -159,12 +160,14 @@ function NewEntry() {
 
   return (
     <Shell title="New Fuel Entry">
-      <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
-        <div>
+      <div className="mx-auto max-w-2xl space-y-4">
+      <div className="flex items-center justify-between rounded-2xl bg-card p-4 shadow-card">
+        <span className="mr-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"><Icon icon="solar:calendar-bold-duotone" className="h-6 w-6" /></span>
+        <div className="flex-1">
           <p className="text-xs text-muted-foreground">{date === todayISO() ? "Today" : "Entry date"}</p>
-          <p className="font-bold text-secondary-foreground">{fmtDate(date)}{now && date === todayISO() ? ` • ${timeStr(now)} IST` : ""}</p>
+          <p className="font-bold">{fmtDate(date)}{now && date === todayISO() ? ` • ${timeStr(now)} IST` : ""}</p>
         </div>
-        {now && <span className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">{shiftOf(now.getHours())}</span>}
+        {now && <span className="rounded-full bg-warning-soft px-3 py-1 text-xs font-bold text-warning-foreground">{shiftOf(now.getHours())}</span>}
       </div>
       <div><label className={labelCls}>Date</label>
         <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} /></div>
@@ -188,7 +191,7 @@ function NewEntry() {
           <option value="">Select product</option>
           {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select></div>
-      <div className="rounded-lg border bg-card p-3">
+      <div className="rounded-2xl bg-card shadow-card p-3">
         <div className="grid grid-cols-2 gap-3">
           <div><label className={labelCls}>Ltr</label>
             <input type="number" inputMode="decimal" className={`${inputCls} text-2xl font-bold tabular-nums`} value={litres} onChange={(e) => setLitres(e.target.value)} /></div>
@@ -211,9 +214,9 @@ function NewEntry() {
             <button onClick={() => { setImage(undefined); setOcr(undefined); setOcrMsg(""); }} className="absolute right-2 top-2 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground">Remove</button></div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            <label className="cursor-pointer rounded-lg border-2 border-dashed border-primary p-4 text-center text-sm font-semibold text-primary">📷 Capture
+            <label className="cursor-pointer rounded-lg border-2 border-dashed border-primary bg-primary-soft p-5 text-center text-sm font-semibold text-primary"><Icon icon="solar:camera-bold-duotone" className="mx-auto mb-1 h-8 w-8" />Capture
               <input type="file" accept="image/*" capture="environment" hidden onChange={(e) => onFile(e.target.files?.[0])} /></label>
-            <label className="cursor-pointer rounded-lg border-2 border-dashed border-input p-4 text-center text-sm font-semibold text-muted-foreground">🖼️ Attach
+            <label className="cursor-pointer rounded-lg border-2 border-dashed border-input bg-muted p-5 text-center text-sm font-semibold text-muted-foreground"><Icon icon="solar:gallery-add-bold-duotone" className="mx-auto mb-1 h-8 w-8" />Attach
               <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} /></label>
           </div>
         )}
@@ -226,8 +229,9 @@ function NewEntry() {
         <input type="checkbox" className="mt-0.5 h-5 w-5 accent-primary" checked={ack} onChange={(e) => setAck(e.target.checked)} />
         <span>Driver confirms {litres || "—"} L{product ? ` of ${product.name}` : ""} received for {vehicle.toUpperCase() || "vehicle"}{now ? ` at ${timeStr(now)} on ${fmtDate(date)}` : ""}.</span>
       </label>
-      <button className={btnCls} disabled={!valid || busy || ocrBusy} onClick={save}>{busy ? "Uploading…" : "Save Entry"}</button>
+      <button className={btnCls} disabled={!valid || busy || ocrBusy} onClick={save}><Icon icon={busy ? "svg-spinners:180-ring" : "solar:diskette-bold"} className="h-5 w-5" />{busy ? "Uploading…" : "Save Entry"}</button>
       {msg && <p className="text-center font-semibold text-primary">{msg}</p>}
+      </div>
     </Shell>
   );
 }

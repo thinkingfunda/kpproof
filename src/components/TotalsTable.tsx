@@ -1,10 +1,11 @@
+import { Icon } from "@iconify/react";
 import type { Total } from "@/lib/totals";
 import { inr } from "@/lib/store";
 
 export function TotalsTable({ title, rows, label }: { title: string; rows: Total[]; label: (k: string) => string }) {
   if (!rows.length) return null;
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="rounded-2xl bg-card shadow-card p-3">
       <p className="mb-2 text-sm font-bold text-card-foreground">{title}</p>
       <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-sm">
         <span className="text-xs text-muted-foreground">Period</span>

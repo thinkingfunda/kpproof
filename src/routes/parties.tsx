@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Shell, inputCls, btnCls } from "@/components/Shell";
@@ -17,16 +18,16 @@ export const Route = createFileRoute("/parties")({
   component: Masters,
 });
 
-const smBtn = "rounded-md px-3 py-1 text-xs font-bold";
+const smBtn = "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold";
 
 function Masters() {
   const [tab, setTab] = useState<"party" | "product" | "vehicle">("party");
   return (
     <Shell title="Masters">
-      <div className="grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1">
-        {([["party", "Party"], ["product", "Product & Rate"], ["vehicle", "Vehicle"]] as const).map(([k, l]) => (
+      <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1">
+        {([["party", "Party", "solar:users-group-rounded-bold-duotone"], ["product", "Product & Rate", "solar:tag-price-bold-duotone"], ["vehicle", "Vehicle", "solar:bus-bold-duotone"]] as const).map(([k, l, ic]) => (
           <button key={k} onClick={() => setTab(k)}
-            className={`rounded-md py-2 text-xs font-bold ${tab === k ? "bg-primary text-primary-foreground" : "text-secondary-foreground"}`}>{l}</button>
+            className={`flex flex-col items-center gap-1 rounded-lg py-2 text-xs font-bold sm:flex-row sm:justify-center sm:text-sm ${tab === k ? "bg-card text-foreground shadow-card" : "text-muted-foreground"}`}><Icon icon={ic} className="h-5 w-5" />{l}</button>
         ))}
       </div>
       {tab === "party" && <PartyMaster />}
@@ -56,14 +57,14 @@ function PartyMaster() {
       </div>
       <button className={btnCls} onClick={submit}>{editId ? "Update Party" : "Add Party"}</button>
       {parties.map((p) => (
-        <div key={p.id} className="flex items-center gap-2 rounded-lg border bg-card p-3">
+        <div key={p.id} className="flex items-center gap-2 rounded-2xl bg-card shadow-card p-3">
           <div className="flex-1"><p className="font-semibold text-card-foreground">{p.name}</p>
             <p className="text-xs text-muted-foreground">{p.creditLimit ? `Credit limit ${inr(p.creditLimit)}` : "No credit limit"}</p></div>
           <button onClick={() => setParties(parties.map((x) => x.id === p.id ? { ...x, active: !x.active } : x))}
-            className={`${smBtn} ${p.active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+            className={`${smBtn} ${p.active ? "bg-success-soft text-success-foreground" : "bg-muted text-muted-foreground"}`}>
             {p.active ? "Active" : "Inactive"}</button>
-          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(p.id); setName(p.name); setLimit(p.creditLimit ? String(p.creditLimit) : ""); }}>Edit</button>
-          <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete party?") && setParties(parties.filter((x) => x.id !== p.id))}>Delete</button>
+          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(p.id); setName(p.name); setLimit(p.creditLimit ? String(p.creditLimit) : ""); }}><Icon icon="solar:pen-bold" className="h-4 w-4" /><span className="hidden sm:inline">Edit</span></button>
+          <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete party?") && setParties(parties.filter((x) => x.id !== p.id))}><Icon icon="solar:trash-bin-trash-bold" className="h-4 w-4" /><span className="hidden sm:inline">Delete</span></button>
         </div>
       ))}
     </>
@@ -90,14 +91,14 @@ function ProductMaster() {
       {products.map((p) => {
         const cur = rateOn(p.rates, todayISO());
         return (
-          <div key={p.id} className="rounded-lg border bg-card p-3">
+          <div key={p.id} className="rounded-2xl bg-card shadow-card p-3">
             <div className="flex items-center gap-2">
               <button className="flex-1 text-left" onClick={() => setOpen(open === p.id ? undefined : p.id)}>
                 <p className="font-semibold text-card-foreground">{p.name}</p>
-                <p className="text-xs text-muted-foreground">Today: {cur !== undefined ? `${inr(cur)}/L` : "No rate"} · {p.rates.length} rate(s) ▾</p>
+                <p className="text-xs text-muted-foreground">Today: {cur !== undefined ? `${inr(cur)}/L` : "No rate"} · {p.rates.length} rate(s)</p>
               </button>
-              <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(p.id); setName(p.name); }}>Edit</button>
-              <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete product?") && setProducts(products.filter((x) => x.id !== p.id))}>Delete</button>
+              <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(p.id); setName(p.name); }}><Icon icon="solar:pen-bold" className="h-4 w-4" /><span className="hidden sm:inline">Edit</span></button>
+              <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete product?") && setProducts(products.filter((x) => x.id !== p.id))}><Icon icon="solar:trash-bin-trash-bold" className="h-4 w-4" /><span className="hidden sm:inline">Delete</span></button>
             </div>
             {open === p.id && <RateEditor product={p} onChange={(rates) => setProducts(products.map((x) => x.id === p.id ? { ...x, rates } : x))} />}
           </div>
@@ -132,8 +133,8 @@ function RateEditor({ product, onChange }: { product: { rates: { id: string; dat
             <b>{inr(r.rate)}</b> from {fmtDate(r.date)}
             <span className="text-muted-foreground"> {i === 0 ? "onwards" : `to ${fmtDate(prevDay(sorted[i - 1]!.date))}`}</span>
           </span>
-          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(r.id); setDate(r.date); setRate(String(r.rate)); }}>Edit</button>
-          <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete rate?") && onChange(product.rates.filter((x) => x.id !== r.id))}>Delete</button>
+          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(r.id); setDate(r.date); setRate(String(r.rate)); }}><Icon icon="solar:pen-bold" className="h-4 w-4" /><span className="hidden sm:inline">Edit</span></button>
+          <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete rate?") && onChange(product.rates.filter((x) => x.id !== r.id))}><Icon icon="solar:trash-bin-trash-bold" className="h-4 w-4" /><span className="hidden sm:inline">Delete</span></button>
         </div>
       ))}
     </div>
@@ -169,13 +170,13 @@ function VehicleMaster() {
       <input type="number" inputMode="decimal" className={inputCls} placeholder="Tank capacity (L, optional)" value={tank} onChange={(e) => setTank(e.target.value)} />
       <button className={btnCls} onClick={submit}>{editId ? "Update Vehicle" : "Add Vehicle"}</button>
       {vehicles.map((v) => (
-        <div key={v.id} className="flex items-center gap-2 rounded-lg border bg-card p-3">
+        <div key={v.id} className="flex items-center gap-2 rounded-2xl bg-card shadow-card p-3">
           <div className="flex-1">
             <p className="font-semibold text-card-foreground">{v.number}</p>
             <p className="text-xs text-muted-foreground">{parties.find((p) => p.id === v.partyId)?.name ?? "—"}{v.tankCapacity ? ` · Tank ${v.tankCapacity} L` : ""}</p>
           </div>
-          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(v.id); setNum(v.number); setPartyId(v.partyId ?? ""); setTank(v.tankCapacity ? String(v.tankCapacity) : ""); }}>Edit</button>
-          <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete vehicle?") && setVehicles(vehicles.filter((x) => x.id !== v.id))}>Delete</button>
+          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(v.id); setNum(v.number); setPartyId(v.partyId ?? ""); setTank(v.tankCapacity ? String(v.tankCapacity) : ""); }}><Icon icon="solar:pen-bold" className="h-4 w-4" /><span className="hidden sm:inline">Edit</span></button>
+          <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete vehicle?") && setVehicles(vehicles.filter((x) => x.id !== v.id))}><Icon icon="solar:trash-bin-trash-bold" className="h-4 w-4" /><span className="hidden sm:inline">Delete</span></button>
         </div>
       ))}
     </>
