@@ -5,3 +5,4 @@
 - [x] Credit limits shared via DB (covered by parties table)
 - [x] History: monthly + shift-wise totals
 - [x] Dashboard: litres, amount, verified entries
+- [x] Import old phone data (parties, vehicles, entries) into shared DB
