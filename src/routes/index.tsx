@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Shell, inputCls, labelCls, btnCls } from "@/components/Shell";
-import { useParties, useEntries, useProducts, useVehicles, rateOn, todayISO, inr, fmtDate, isVerified } from "@/lib/store";
+import { useParties, useEntries, useProducts, useVehicles, rateOn, todayISO, withYear, inr, fmtDate, isVerified } from "@/lib/store";
 import { useServerFn } from "@tanstack/react-start";
 import { signUpload } from "@/lib/cloudinary.functions";
 import { readSlip, type OcrResult } from "@/lib/ocr.functions";
@@ -110,12 +110,14 @@ function NewEntry() {
     const img = await compress(f); setImage(img); setOcr(undefined);
     setOcrBusy(true); setOcrMsg("Reading slip…");
     try {
-      const r = await ocrFn({ data: { image: img, parties: active.map((p) => p.name), products: products.map((p) => p.name) } });
+      const r = await ocrFn({ data: { image: img, parties: active.map((p) => p.name), products: products.map((p) => p.name), vehicles: vehicles.map((v) => v.number) } });
       if (!r.result) { setOcrMsg(r.error ?? "Could not read slip"); return; }
       const o = r.result; setOcr(o);
-      const filled: string[] = [];
-      if (o.date && /^\d{4}-\d{2}-\d{2}$/.test(o.date)) { setDate(o.date); filled.push("Date"); }
-      if (o.partyName) { const m = active.find((p) => norm(p.name).includes(norm(o.partyName!)) || norm(o.partyName!).includes(norm(p.name))); if (m) { setPartyId(m.id); filled.push("Party"); } }
+      const filled: string[] = []; let pid = "";
+      if (o.date && /^\d{4}-\d{2}-\d{2}$/.test(o.date)) { setDate(withYear(o.date)); filled.push("Date"); }
+      if (o.partyName) { const m = active.find((p) => norm(p.name).includes(norm(o.partyName!)) || norm(o.partyName!).includes(norm(p.name))); if (m) { setPartyId(m.id); filled.push("Party"); pid = m.id; } }
+      if (o.vehicle) { const vn = norm(o.vehicle); const pool = pid ? vehicles.filter((v) => v.partyId === pid) : vehicles; const m = pool.find((v) => norm(v.number) === vn) ?? vehicles.find((v) => norm(v.number) === vn);
+        if (m) { setVehicle(m.number); if (!pid && m.partyId && active.some((p) => p.id === m.partyId)) { setPartyId(m.partyId); filled.push("Party"); } } else setVehicle(o.vehicle.toUpperCase()); filled.push("Vehicle"); }
       if (o.product) { const m = products.find((p) => norm(p.name).includes(norm(o.product!)) || norm(o.product!).includes(norm(p.name))); if (m) { setProductId(m.id); filled.push("Product"); } }
       if (o.litres) { setLitres(String(o.litres)); filled.push("Ltr"); }
       if (o.amount) { setTimeout(() => setAmount(String(o.amount)), 0); filled.push("Amount"); }

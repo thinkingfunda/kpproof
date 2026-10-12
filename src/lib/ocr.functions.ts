@@ -1,15 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-export type OcrResult = { date: string | null; partyName: string | null; product: string | null; litres: number | null; amount: number | null; rate: number | null };
+export type OcrResult = { date: string | null; partyName: string | null; vehicle: string | null; product: string | null; litres: number | null; amount: number | null; rate: number | null };
 
 const schema = {
   type: "object",
   additionalProperties: false,
-  required: ["date", "partyName", "product", "litres", "amount", "rate"],
+  required: ["date", "partyName", "vehicle", "product", "litres", "amount", "rate"],
   properties: {
     date: { type: ["string", "null"], description: "Date on slip as YYYY-MM-DD" },
     partyName: { type: ["string", "null"] },
+    vehicle: { type: ["string", "null"], description: "Vehicle registration number e.g. MH12AB1234, no spaces" },
     product: { type: ["string", "null"], description: "Fuel/product name e.g. Diesel, Petrol" },
     litres: { type: ["number", "null"] },
     amount: { type: ["number", "null"], description: "Total amount in rupees" },
@@ -18,7 +19,7 @@ const schema = {
 };
 
 export const readSlip = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ image: z.string().startsWith("data:image/").max(4_000_000), parties: z.array(z.string()).max(500), products: z.array(z.string()).max(100) }).parse(d))
+  .inputValidator((d) => z.object({ image: z.string().startsWith("data:image/").max(4_000_000), parties: z.array(z.string()).max(500), vehicles: z.array(z.string()).max(2000).default([]), products: z.array(z.string()).max(100) }).parse(d))
   .handler(async ({ data }): Promise<{ result?: OcrResult; error?: string }> => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) return { error: "AI not configured" };
@@ -33,9 +34,9 @@ export const readSlip = createServerFn({ method: "POST" })
         include: ["reasoning.encrypted_content"],
         text: { format: { type: "json_schema", name: "fuel_slip", strict: true, schema } },
         input: [
-          { role: "system", content: "You read photos of Indian fuel dispenser meters (digital/7-segment or mechanical displays, usually rows labelled Sale/Amount Rs, Volume/Litres, Rate/Price per litre) and fuel slips/receipts. For a dispenser meter, read the digits exactly including the decimal point; the Volume/Litres row goes to litres, the Amount/Sale row to amount, the Rate row to rate. If only two of litres/amount/rate are visible, leave the third null. Ignore totalizer/cumulative counters. Extract fields; use null when not visible. Dates on slips are Indian DD/MM/YYYY; return YYYY-MM-DD. If a party name is visible, return the closest match from the known parties list. Product should match the known products list when possible." },
+          { role: "system", content: "You read photos of Indian fuel dispenser meters (digital/7-segment or mechanical displays, usually rows labelled Sale/Amount Rs, Volume/Litres, Rate/Price per litre) and fuel slips/receipts. For a dispenser meter, read the digits exactly including the decimal point; the Volume/Litres row goes to litres, the Amount/Sale row to amount, the Rate row to rate. If only two of litres/amount/rate are visible, leave the third null. Ignore totalizer/cumulative counters. Extract fields; use null when not visible. Dates on slips are Indian DD/MM/YYYY; return YYYY-MM-DD. If a party name is visible, return the closest match from the known parties list. If a vehicle number is visible, return the closest match from the known vehicles list. Product should match the known products list when possible." },
           { role: "user", content: [
-            { type: "input_text", text: `Known parties: ${data.parties.join("; ") || "none"}\nKnown products: ${data.products.join("; ") || "none"}` },
+            { type: "input_text", text: `Known parties: ${data.parties.join("; ") || "none"}\nKnown products: ${data.products.join("; ") || "none"}\nKnown vehicles: ${data.vehicles.join("; ") || "none"}` },
             { type: "input_image", image_url: data.image },
           ] },
         ],

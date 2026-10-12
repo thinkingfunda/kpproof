@@ -1,7 +1,9 @@
 import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
-import { useEntries, inr } from "@/lib/store";
+import { useState } from "react";
+import { useEntries, inr, canEdit, isVerified, type Entry } from "@/lib/store";
+import { inputCls } from "@/components/Shell";
 import { TotalsTable } from "@/components/TotalsTable";
 import { groupTotals, monthKey, monthLabel, shiftKey } from "@/lib/totals";
 
@@ -19,6 +21,8 @@ export const Route = createFileRoute("/history")({
 
 function History() {
   const [entries, setEntries] = useEntries();
+  const [ed, setEd] = useState<Entry>();
+  const saveEd = () => { if (!ed) return; setEntries(entries.map((x) => (x.id === ed.id ? { ...ed, vehicle: ed.vehicle.trim().toUpperCase(), verified: isVerified(ed, ed.ocr) } : x))); setEd(undefined); };
   const L = entries.reduce((s, e) => s + e.litres, 0);
   const A = entries.reduce((s, e) => s + e.amount, 0);
   return (
@@ -39,9 +43,25 @@ function History() {
             <p className="text-muted-foreground">{e.partyName}</p>
             <div className="flex justify-between"><span>{e.litres} L</span><span className="font-bold text-primary">{inr(e.amount)}</span></div>
           </div>
+          {canEdit(e.date) && <button aria-label="Edit" className="self-start rounded-full p-1.5 text-primary hover:bg-primary-soft" onClick={() => setEd({ ...e })}><Icon icon="solar:pen-bold" className="h-5 w-5" /></button>}
           <button aria-label="Delete" className="self-start rounded-full p-1.5 text-destructive hover:bg-destructive-soft" onClick={() => confirm("Delete entry?") && setEntries(entries.filter((x) => x.id !== e.id))}><Icon icon="solar:trash-bin-trash-bold" className="h-5 w-5" /></button>
         </div>
       ))}
+      {ed && <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 p-4 md:items-center" onClick={() => setEd(undefined)}>
+        <div className="w-full max-w-md space-y-3 rounded-2xl bg-card p-4 shadow-card" onClick={(x) => x.stopPropagation()}>
+          <h2 className="font-display text-lg font-bold">Edit entry</h2>
+          <label className="block text-sm">Date<input type="date" className={inputCls} value={ed.date} onChange={(x) => setEd({ ...ed, date: x.target.value })} /></label>
+          <label className="block text-sm">Vehicle No<input className={`${inputCls} uppercase`} value={ed.vehicle} onChange={(x) => setEd({ ...ed, vehicle: x.target.value })} /></label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm">Ltr<input type="number" inputMode="decimal" className={inputCls} value={ed.litres} onChange={(x) => setEd({ ...ed, litres: Number(x.target.value) })} /></label>
+            <label className="block text-sm">Amount (₹)<input type="number" inputMode="decimal" className={inputCls} value={ed.amount} onChange={(x) => setEd({ ...ed, amount: Number(x.target.value) })} /></label>
+          </div>
+          <div className="flex gap-2">
+            <button className="flex-1 rounded-lg bg-secondary py-2.5 font-bold text-secondary-foreground" onClick={() => setEd(undefined)}>Cancel</button>
+            <button className="flex-1 rounded-lg bg-primary py-2.5 font-bold text-primary-foreground disabled:opacity-50" disabled={!ed.vehicle.trim() || !(ed.litres > 0) || !(ed.amount > 0)} onClick={saveEd}>Save</button>
+          </div>
+        </div>
+      </div>}
     </Shell>
   );
 }
