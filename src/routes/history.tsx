@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { useState } from "react";
-import { useEntries, inr, canEdit, type Entry } from "@/lib/store";
+import { useEntries, inr, canEdit, isVerified, type Entry } from "@/lib/store";
 import { inputCls } from "@/components/Shell";
 import { TotalsTable } from "@/components/TotalsTable";
 import { groupTotals, monthKey, monthLabel, shiftKey } from "@/lib/totals";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/history")({
 function History() {
   const [entries, setEntries] = useEntries();
   const [ed, setEd] = useState<Entry>();
-  const saveEd = () => { if (!ed) return; setEntries(entries.map((x) => (x.id === ed.id ? { ...ed, vehicle: ed.vehicle.trim().toUpperCase() } : x))); setEd(undefined); };
+  const saveEd = () => { if (!ed) return; setEntries(entries.map((x) => (x.id === ed.id ? { ...ed, vehicle: ed.vehicle.trim().toUpperCase(), verified: isVerified(ed, ed.ocr) } : x))); setEd(undefined); };
   const L = entries.reduce((s, e) => s + e.litres, 0);
   const A = entries.reduce((s, e) => s + e.amount, 0);
   return (
