@@ -106,3 +106,8 @@ export function isVerified(e: { litres: number; amount: number }, ocr?: { litres
   const near = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.05, b * 0.01);
   return near(ocr.litres, e.litres) && near(ocr.amount, e.amount);
 }
+
+/** Entries can be edited for 60 days after the entry date. */
+export const canEdit = (date: string, today = todayISO()) => (Date.parse(today) - Date.parse(date)) / 86400000 <= 60;
+/** Slip dates: always use the current year. */
+export const withYear = (iso: string, year = new Date().getFullYear()) => `${year}${iso.slice(4)}`;

@@ -35,3 +35,10 @@ describe("groupTotals", () => {
     expect(t).toMatchObject({ key: "2026-05", count: 2, litres: 30, amount: 2850, verified: 1 });
   });
 });
+
+import { canEdit, withYear } from "@/lib/store";
+describe("edit window & slip year", () => {
+  it("allows edit at 60 days", () => expect(canEdit("2026-08-13", "2026-10-12")).toBe(true));
+  it("blocks edit at 61 days", () => expect(canEdit("2026-08-12", "2026-10-12")).toBe(false));
+  it("forces current year", () => expect(withYear("2024-10-09", 2026)).toBe("2026-10-09"));
+});
