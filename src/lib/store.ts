@@ -107,6 +107,13 @@ export function isVerified(e: { litres: number; amount: number }, ocr?: { litres
   return near(ocr.litres, e.litres) && near(ocr.amount, e.amount);
 }
 
+/** Party name shown for an entry: prefer the Vehicle Master mapping (vehicle → party), else the entry's saved party name. */
+export function entryPartyName(e: Pick<Entry, "vehicle" | "partyName">, vehicles: Vehicle[], parties: Party[]): string {
+  const v = vehicles.find((x) => x.number.trim().toUpperCase() === e.vehicle.trim().toUpperCase());
+  const p = v?.partyId ? parties.find((x) => x.id === v.partyId) : undefined;
+  return p?.name ?? e.partyName;
+}
+
 /** Entries can be edited for 60 days after the entry date. */
 export const canEdit = (date: string, today = todayISO()) => (Date.parse(today) - Date.parse(date)) / 86400000 <= 60;
 /** Slip dates: always use the current year. */
