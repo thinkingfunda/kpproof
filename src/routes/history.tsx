@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { useState } from "react";
-import { useEntries, inr, canEdit, isVerified, type Entry } from "@/lib/store";
+import { useEntries, useVehicles, useParties, inr, canEdit, isVerified, entryPartyName, type Entry } from "@/lib/store";
 import { inputCls } from "@/components/Shell";
 import { TotalsTable } from "@/components/TotalsTable";
 import { groupTotals, monthKey, monthLabel, shiftKey } from "@/lib/totals";
@@ -21,6 +21,8 @@ export const Route = createFileRoute("/history")({
 
 function History() {
   const [entries, setEntries] = useEntries();
+  const [vehicles] = useVehicles();
+  const [parties] = useParties();
   const [ed, setEd] = useState<Entry>();
   const saveEd = () => { if (!ed) return; setEntries(entries.map((x) => (x.id === ed.id ? { ...ed, vehicle: ed.vehicle.trim().toUpperCase(), verified: isVerified(ed, ed.ocr) } : x))); setEd(undefined); };
   const L = entries.reduce((s, e) => s + e.litres, 0);
@@ -40,7 +42,7 @@ function History() {
           {e.image && <img src={e.image} alt="" className="h-16 w-16 rounded object-cover" />}
           <div className="flex-1 text-sm">
             <div className="flex justify-between"><span className="font-bold">{e.vehicle} <span className={`ml-1 rounded-full px-2 py-0.5 text-[10px] ${e.verified ? "bg-success-soft text-success-foreground" : "bg-warning-soft text-warning-foreground"}`}>{e.verified ? "Verified" : "Unverified"}</span></span><span className="text-muted-foreground">{e.date}</span></div>
-            <p className="text-muted-foreground">{e.partyName}</p>
+            <p className="text-muted-foreground">{entryPartyName(e, vehicles, parties)}</p>
             <div className="flex justify-between"><span>{e.litres} L</span><span className="font-bold text-primary">{inr(e.amount)}</span></div>
           </div>
           {canEdit(e.date) && <button aria-label="Edit" className="self-start rounded-full p-1.5 text-primary hover:bg-primary-soft" onClick={() => setEd({ ...e })}><Icon icon="solar:pen-bold" className="h-5 w-5" /></button>}
