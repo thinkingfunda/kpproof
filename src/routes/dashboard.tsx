@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { TotalsTable } from "@/components/TotalsTable";
-import { useEntries, inr, todayISO } from "@/lib/store";
+import { useEntries, useVehicles, useParties, inr, todayISO, entryPartyName } from "@/lib/store";
 import { groupTotals, monthKey, monthLabel, shiftKey } from "@/lib/totals";
 
 export const Route = createFileRoute("/dashboard")({
