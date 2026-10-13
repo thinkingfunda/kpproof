@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { TotalsTable } from "@/components/TotalsTable";
-import { useEntries, inr, todayISO } from "@/lib/store";
+import { useEntries, useVehicles, useParties, inr, todayISO, entryPartyName } from "@/lib/store";
 import { groupTotals, monthKey, monthLabel, shiftKey } from "@/lib/totals";
 
 export const Route = createFileRoute("/dashboard")({
@@ -34,12 +34,14 @@ function Stat({ label, value, sub, icon }: { label: string; value: string; sub?:
 
 function Dashboard() {
   const [entries] = useEntries();
+  const [vehicles] = useVehicles();
+  const [parties] = useParties();
   const today = todayISO();
   const month = today.slice(0, 7);
   const sum = (es: typeof entries) => ({ l: es.reduce((s, e) => s + e.litres, 0), a: es.reduce((s, e) => s + e.amount, 0), v: es.filter((e) => e.verified).length, n: es.length });
   const all = sum(entries), td = sum(entries.filter((e) => e.date === today)), mo = sum(entries.filter((e) => e.date.startsWith(month)));
   const pct = all.n ? Math.round((all.v / all.n) * 100) : 0;
-  const parties = groupTotals(entries.filter((e) => e.date.startsWith(month)), (e) => e.partyName).sort((a, b) => b.amount - a.amount);
+  const byParty = groupTotals(entries.filter((e) => e.date.startsWith(month)), (e) => entryPartyName(e, vehicles, parties)).sort((a, b) => b.amount - a.amount);
   return (
     <Shell title="Dashboard">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -55,7 +57,7 @@ function Dashboard() {
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-success" style={{ width: `${pct}%` }} /></div>
       </div>
       <TotalsTable title="This month by shift" rows={groupTotals(entries.filter((e) => e.date.startsWith(month)), shiftKey)} label={(k) => k} />
-      <TotalsTable title="This month by party" rows={parties} label={(k) => k} />
+      <TotalsTable title="This month by party" rows={byParty} label={(k) => k} />
       <TotalsTable title="By month" rows={groupTotals(entries, monthKey).sort((a, b) => b.key.localeCompare(a.key))} label={monthLabel} />
       {entries.length === 0 && <p className="text-center text-muted-foreground">No entries yet.</p>}
     </Shell>
