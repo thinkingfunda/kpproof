@@ -41,7 +41,7 @@ function Dashboard() {
   const sum = (es: typeof entries) => ({ l: es.reduce((s, e) => s + e.litres, 0), a: es.reduce((s, e) => s + e.amount, 0), v: es.filter((e) => e.verified).length, n: es.length });
   const all = sum(entries), td = sum(entries.filter((e) => e.date === today)), mo = sum(entries.filter((e) => e.date.startsWith(month)));
   const pct = all.n ? Math.round((all.v / all.n) * 100) : 0;
-  const parties = groupTotals(entries.filter((e) => e.date.startsWith(month)), (e) => entryPartyName(e, vehicles, parties)).sort((a, b) => b.amount - a.amount);
+  const byParty = groupTotals(entries.filter((e) => e.date.startsWith(month)), (e) => entryPartyName(e, vehicles, parties)).sort((a, b) => b.amount - a.amount);
   return (
     <Shell title="Dashboard">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
