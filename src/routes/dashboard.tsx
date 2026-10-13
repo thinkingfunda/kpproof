@@ -57,7 +57,7 @@ function Dashboard() {
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-success" style={{ width: `${pct}%` }} /></div>
       </div>
       <TotalsTable title="This month by shift" rows={groupTotals(entries.filter((e) => e.date.startsWith(month)), shiftKey)} label={(k) => k} />
-      <TotalsTable title="This month by party" rows={parties} label={(k) => k} />
+      <TotalsTable title="This month by party" rows={byParty} label={(k) => k} />
       <TotalsTable title="By month" rows={groupTotals(entries, monthKey).sort((a, b) => b.key.localeCompare(a.key))} label={monthLabel} />
       {entries.length === 0 && <p className="text-center text-muted-foreground">No entries yet.</p>}
     </Shell>
