@@ -163,14 +163,6 @@ function NewEntry() {
   return (
     <Shell title="New Fuel Entry">
       <div className="mx-auto max-w-2xl space-y-4">
-      <div className="flex items-center justify-between rounded-2xl bg-card p-4 shadow-card">
-        <span className="mr-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"><Icon icon="solar:calendar-bold-duotone" className="h-6 w-6" /></span>
-        <div className="flex-1">
-          <p className="text-xs text-muted-foreground">{date === todayISO() ? "Today" : "Entry date"}</p>
-          <p className="font-bold">{fmtDate(date)}{now && date === todayISO() ? ` • ${timeStr(now)} IST` : ""}</p>
-        </div>
-        {now && <span className="rounded-full bg-warning-soft px-3 py-1 text-xs font-bold text-warning-foreground">{shiftOf(now.getHours())}</span>}
-      </div>
       <div><label className={labelCls}>Date</label>
         <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} /></div>
       <div><label className={labelCls}>Party Name</label>
