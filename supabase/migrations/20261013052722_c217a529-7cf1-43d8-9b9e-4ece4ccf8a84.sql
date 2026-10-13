@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_party_name(), public.sync_product_name(), public.sync_vehicle_number() FROM PUBLIC, anon, authenticated;
