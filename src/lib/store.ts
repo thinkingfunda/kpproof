@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Payment } from "./ledger";
+export type { Payment } from "./ledger";
 
 export type Party = { id: string; name: string; active: boolean; phone?: string; creditLimit?: number | undefined };
 export type RateRow = { id: string; date: string; rate: number };
@@ -82,6 +84,14 @@ export const useEntries = () => useLive<Entry>(["fuel_entries"],
     image: un(r.image), createdAt: new Date(r.created_at).getTime(), productId: un(r.product_id), productName: un(r.product_name), rate: num(r.rate),
     signature: un(r.signature), shift: un(r.shift), ocr: un(r.ocr), verified: r.verified })),
   (a, b) => sync("fuel_entries", a.map(entryRow), b.map(entryRow)));
+
+const payRow = (p: Payment) => ({ id: p.id, pay_date: p.date, party_id: p.partyId || null, party_name: p.partyName, amount: p.amount,
+  tds: p.tds, tcs: p.tcs, final_amount: p.final, remark: p.remark ?? null, created_at: new Date(p.createdAt).toISOString() });
+export const usePayments = () => useLive<Payment>(["payments"],
+  async () => must(await db.from("payments").select("*").order("pay_date", { ascending: false })).map((r: Row) => ({
+    id: r.id, date: r.pay_date, partyId: r.party_id ?? "", partyName: r.party_name, amount: Number(r.amount), tds: Number(r.tds), tcs: Number(r.tcs),
+    final: Number(r.final_amount), remark: un(r.remark), createdAt: new Date(r.created_at).getTime() })),
+  (a, b) => sync("payments", a.map(payRow), b.map(payRow)));
 
 /** Rate applicable on `date`: latest rate whose effective date is on or before `date`. */
 export function rateOn(rates: RateRow[], date: string): number | undefined {
