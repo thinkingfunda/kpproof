@@ -95,6 +95,53 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          final_amount: number
+          id: string
+          party_id: string | null
+          party_name: string
+          pay_date: string
+          remark: string | null
+          tcs: number
+          tds: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          final_amount: number
+          id?: string
+          party_id?: string | null
+          party_name: string
+          pay_date: string
+          remark?: string | null
+          tcs?: number
+          tds?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          final_amount?: number
+          id?: string
+          party_id?: string | null
+          party_name?: string
+          pay_date?: string
+          remark?: string | null
+          tcs?: number
+          tds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_rates: {
         Row: {
           created_at: string
