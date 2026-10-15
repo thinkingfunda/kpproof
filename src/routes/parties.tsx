@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Shell, inputCls, btnCls } from "@/components/Shell";
 import { useParties, useProducts, useVehicles, fmtDate, inr, todayISO, rateOn } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/parties")({
   head: () => ({
@@ -153,9 +154,14 @@ function VehicleMaster() {
   const [partyId, setPartyId] = useState("");
   const [tank, setTank] = useState("");
   const [editId, setEditId] = useState<string>();
-  const submit = () => {
+  const submit = async () => {
     const n = num.trim().toUpperCase();
     if (!n) return;
+    const key = n.replace(/[^A-Z0-9]/g, "");
+    const { data, error } = await supabase.from("vehicles").select("id, number");
+    if (error) { alert("Could not check duplicates. Try again."); return; }
+    const dup = (data ?? []).find((x) => x.id !== editId && x.number.toUpperCase().replace(/[^A-Z0-9]/g, "") === key);
+    if (dup) { alert(`Vehicle ${dup.number} already exists in Vehicle Master.`); return; }
     const v = { id: editId ?? crypto.randomUUID(), number: n, partyId: partyId || undefined, tankCapacity: Number(tank) > 0 ? Number(tank) : undefined };
     setVehicles(editId ? vehicles.map((x) => x.id === editId ? v : x) : [...vehicles, v]);
     setNum(""); setPartyId(""); setTank(""); setEditId(undefined);
