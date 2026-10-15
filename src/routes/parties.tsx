@@ -40,6 +40,7 @@ function Masters() {
 
 function PartyMaster() {
   const [parties, setParties] = useParties();
+  const [vehicles] = useVehicles();
   const [name, setName] = useState("");
   const [limit, setLimit] = useState("");
   const [editId, setEditId] = useState<string>();
@@ -57,17 +58,29 @@ function PartyMaster() {
         <input type="number" inputMode="decimal" className={`${inputCls} w-32`} placeholder="Credit ₹" value={limit} onChange={(e) => setLimit(e.target.value)} />
       </div>
       <button className={btnCls} onClick={submit}>{editId ? "Update Party" : "Add Party"}</button>
-      {parties.map((p) => (
-        <div key={p.id} className="flex items-center gap-2 rounded-2xl bg-card shadow-card p-3">
+      {parties.map((p) => {
+        const mine = vehicles.filter((v) => v.partyId === p.id);
+        return (
+        <div key={p.id} className="rounded-2xl bg-card shadow-card p-3">
+          <div className="flex items-center gap-2">
           <div className="flex-1"><p className="font-semibold text-card-foreground">{p.name}</p>
             <p className="text-xs text-muted-foreground">{p.creditLimit ? `Credit limit ${inr(p.creditLimit)}` : "No credit limit"}</p></div>
           <button onClick={() => setParties(parties.map((x) => x.id === p.id ? { ...x, active: !x.active } : x))}
-            className={`${smBtn} ${p.active ? "bg-success-soft text-success-foreground" : "bg-muted text-muted-foreground"}`}>
+            className={`${smBtn} shrink-0 ${p.active ? "bg-success-soft text-success-foreground" : "bg-muted text-muted-foreground"}`}>
             {p.active ? "Active" : "Inactive"}</button>
-          <button className={`${smBtn} bg-secondary text-secondary-foreground`} onClick={() => { setEditId(p.id); setName(p.name); setLimit(p.creditLimit ? String(p.creditLimit) : ""); }}><Icon icon="solar:pen-bold" className="h-4 w-4" /><span className="hidden sm:inline">Edit</span></button>
-          <button className={`${smBtn} text-destructive`} onClick={() => confirm("Delete party?") && setParties(parties.filter((x) => x.id !== p.id))}><Icon icon="solar:trash-bin-trash-bold" className="h-4 w-4" /><span className="hidden sm:inline">Delete</span></button>
+          <button className={`${smBtn} shrink-0 bg-secondary text-secondary-foreground`} onClick={() => { setEditId(p.id); setName(p.name); setLimit(p.creditLimit ? String(p.creditLimit) : ""); }}><Icon icon="solar:pen-bold" className="h-4 w-4" /><span className="hidden sm:inline">Edit</span></button>
+          <button className={`${smBtn} shrink-0 text-destructive`} onClick={() => confirm("Delete party?") && setParties(parties.filter((x) => x.id !== p.id))}><Icon icon="solar:trash-bin-trash-bold" className="h-4 w-4" /><span className="hidden sm:inline">Delete</span></button>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t pt-2">
+            <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground"><Icon icon="solar:bus-bold-duotone" className="h-4 w-4" />{mine.length} Vehicle{mine.length === 1 ? "" : "s"}</span>
+            {mine.map((v) => (
+              <span key={v.id} className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold uppercase text-primary">{v.number}</span>
+            ))}
+            {mine.length === 0 && <span className="text-xs text-muted-foreground">No vehicles mapped — add them in Vehicle tab.</span>}
+          </div>
         </div>
-      ))}
+        );
+      })}
     </>
   );
 }
