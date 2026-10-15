@@ -9,6 +9,8 @@ const NAV = [
   { to: "/", label: "New Entry", icon: "solar:gas-station-bold-duotone", exact: true },
   { to: "/dashboard", label: "Dashboard", icon: "solar:chart-2-bold-duotone" },
   { to: "/history", label: "History", icon: "solar:clipboard-list-bold-duotone" },
+  { to: "/payment", label: "Payment", icon: "solar:wallet-money-bold-duotone" },
+  { to: "/report", label: "Report", icon: "solar:document-text-bold-duotone" },
   { to: "/parties", label: "Masters", icon: "solar:folder-with-files-bold-duotone" },
 ] as const;
 
