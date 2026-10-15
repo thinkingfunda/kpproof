@@ -175,7 +175,12 @@ function NewEntry() {
               Credit available: {inr(headroom)} of {inr(party.creditLimit!)}{headroom < 0 ? " — limit exceeded" : ""}</p>
           : <p className="mt-1 text-xs text-muted-foreground">No credit limit set (add one in Masters)</p>)}</div>
       <div><label className={labelCls}>Vehicle No</label>
-        <input list="veh-list" className={`${inputCls} uppercase`} placeholder="MH12AB1234" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
+        <input list="veh-list" className={`${inputCls} uppercase`} placeholder="MH12AB1234" value={vehicle} onChange={(e) => {
+          const val = e.target.value; setVehicle(val);
+          const k = val.toUpperCase().replace(/[^A-Z0-9]/g, "");
+          const m = vehicles.find((v) => v.number.toUpperCase().replace(/[^A-Z0-9]/g, "") === k);
+          if (m?.partyId && active.some((p) => p.id === m.partyId)) setPartyId(m.partyId);
+        }} />
         <datalist id="veh-list">{vehicles.map((v) => <option key={v.id} value={v.number} />)}</datalist>
         {chips.length > 0 && <div className="mt-2 flex flex-wrap gap-2">
           {chips.map((v) => <button key={v} onClick={() => setVehicle(v)} className={pill}>{v}</button>)}
