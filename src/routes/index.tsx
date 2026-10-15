@@ -183,7 +183,7 @@ function NewEntry() {
         }} />
         <datalist id="veh-list">{vehicles.map((v) => <option key={v.id} value={v.number} />)}</datalist>
         {chips.length > 0 && <div className="mt-2 flex flex-wrap gap-2">
-          {chips.map((v) => <button key={v} onClick={() => setVehicle(v)} className={pill}>{v}</button>)}
+          {chips.map((v) => <button key={v} onClick={() => { setVehicle(v); const m = vehicles.find((x) => x.number.toUpperCase() === v.toUpperCase()); if (m?.partyId && active.some((p) => p.id === m.partyId)) setPartyId(m.partyId); }} className={pill}>{v}</button>)}
         </div>}</div>
       <div><label className={labelCls}>Product</label>
         <select className={inputCls} value={productId} onChange={(e) => setProductId(e.target.value)}>
