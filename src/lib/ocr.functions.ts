@@ -45,7 +45,13 @@ export const readSlip = createServerFn({ method: "POST" })
     if (!res.ok || !res.body) {
       const body = await res.text();
       console.error(`OCR failed [${res.status}]: ${body}`);
-      return { error: res.status === 402 ? "AI credits exhausted" : res.status === 429 ? "Too many requests, try again shortly" : `Could not read slip (${res.status})` };
+      if ([402, 403, 429].includes(res.status) || res.status >= 500) {
+        const { geminiOcr } = await import("./gemini-ocr.server");
+        const g = await geminiOcr(`${SYSTEM}\n\nKnown parties: ${data.parties.join("; ") || "none"}\nKnown products: ${data.products.join("; ") || "none"}\nKnown vehicles: ${data.vehicles.join("; ") || "none"}\n\nReturn ONLY JSON with keys date, partyName, vehicle, product, litres, amount, rate (null when not visible).`, data.image);
+        if (!g.text) return { error: g.error };
+        try { return { result: JSON.parse(g.text.replace(/^```(json)?|```$/g, "").trim()) as OcrResult }; } catch { return { error: "Could not read slip" }; }
+      }
+      return { error: `Could not read slip (${res.status})` };
     }
     const reader = res.body.getReader(); const dec = new TextDecoder();
     let buf = "", text = "", err = "";
