@@ -13,7 +13,7 @@ export function GeminiMaster() {
   useEffect(() => { load(); }, []);
   const submit = async () => {
     setBusy(true); setMsg("");
-    const r = await save({ data: { id: editId, accountName: name, apiKey: key || undefined } });
+    const r = await save({ data: { ...(editId ? { id: editId } : {}), accountName: name, ...(key ? { apiKey: key } : {}) } });
     setBusy(false);
     if (r.error) return setMsg(r.error);
     setName(""); setKey(""); setEditId(undefined); load();

@@ -50,7 +50,7 @@ export const readSlip = createServerFn({ method: "POST" })
       if ([402, 403, 429].includes(res.status) || res.status >= 500) {
         const { geminiOcr } = await import("./gemini-ocr.server");
         const g = await geminiOcr(`${SYSTEM}\n\nKnown parties: ${data.parties.join("; ") || "none"}\nKnown products: ${data.products.join("; ") || "none"}\nKnown vehicles: ${data.vehicles.join("; ") || "none"}\n\nReturn ONLY JSON with keys date, partyName, vehicle, product, litres, amount, rate (null when not visible).`, data.image);
-        if (!g.text) return { error: g.error };
+        if (!g.text) return { error: g.error ?? "Could not read slip" };
         try { return { result: JSON.parse(g.text.replace(/^```(json)?|```$/g, "").trim()) as OcrResult }; } catch { return { error: "Could not read slip" }; }
       }
       return { error: `Could not read slip (${res.status})` };
