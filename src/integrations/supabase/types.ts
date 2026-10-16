@@ -71,6 +71,30 @@ export type Database = {
         }
         Relationships: []
       }
+      gemini_keys: {
+        Row: {
+          account_name: string
+          api_key: string
+          created_at: string
+          exhausted_at: string | null
+          id: string
+        }
+        Insert: {
+          account_name: string
+          api_key: string
+          created_at?: string
+          exhausted_at?: string | null
+          id?: string
+        }
+        Update: {
+          account_name?: string
+          api_key?: string
+          created_at?: string
+          exhausted_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       parties: {
         Row: {
           active: boolean

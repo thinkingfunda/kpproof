@@ -18,6 +18,8 @@ const schema = {
   },
 };
 
+const SYSTEM = "You read photos of Indian fuel dispenser meters (digital/7-segment or mechanical displays, usually rows labelled Sale/Amount Rs, Volume/Litres, Rate/Price per litre) and fuel slips/receipts. For a dispenser meter, read the digits exactly including the decimal point; the Volume/Litres row goes to litres, the Amount/Sale row to amount, the Rate row to rate. If only two of litres/amount/rate are visible, leave the third null. Ignore totalizer/cumulative counters. Extract fields; use null when not visible. Dates on slips are Indian DD/MM/YYYY; return YYYY-MM-DD. If a party name is visible, return the closest match from the known parties list. If a vehicle number is visible, return the closest match from the known vehicles list. Product should match the known products list when possible.";
+
 export const readSlip = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ image: z.string().startsWith("data:image/").max(4_000_000), parties: z.array(z.string()).max(500), vehicles: z.array(z.string()).max(2000).default([]), products: z.array(z.string()).max(100) }).parse(d))
   .handler(async ({ data }): Promise<{ result?: OcrResult; error?: string }> => {
@@ -34,7 +36,7 @@ export const readSlip = createServerFn({ method: "POST" })
         include: ["reasoning.encrypted_content"],
         text: { format: { type: "json_schema", name: "fuel_slip", strict: true, schema } },
         input: [
-          { role: "system", content: "You read photos of Indian fuel dispenser meters (digital/7-segment or mechanical displays, usually rows labelled Sale/Amount Rs, Volume/Litres, Rate/Price per litre) and fuel slips/receipts. For a dispenser meter, read the digits exactly including the decimal point; the Volume/Litres row goes to litres, the Amount/Sale row to amount, the Rate row to rate. If only two of litres/amount/rate are visible, leave the third null. Ignore totalizer/cumulative counters. Extract fields; use null when not visible. Dates on slips are Indian DD/MM/YYYY; return YYYY-MM-DD. If a party name is visible, return the closest match from the known parties list. If a vehicle number is visible, return the closest match from the known vehicles list. Product should match the known products list when possible." },
+          { role: "system", content: SYSTEM },
           { role: "user", content: [
             { type: "input_text", text: `Known parties: ${data.parties.join("; ") || "none"}\nKnown products: ${data.products.join("; ") || "none"}\nKnown vehicles: ${data.vehicles.join("; ") || "none"}` },
             { type: "input_image", image_url: data.image },
@@ -45,7 +47,13 @@ export const readSlip = createServerFn({ method: "POST" })
     if (!res.ok || !res.body) {
       const body = await res.text();
       console.error(`OCR failed [${res.status}]: ${body}`);
-      return { error: res.status === 402 ? "AI credits exhausted" : res.status === 429 ? "Too many requests, try again shortly" : `Could not read slip (${res.status})` };
+      if ([402, 403, 429].includes(res.status) || res.status >= 500) {
+        const { geminiOcr } = await import("./gemini-ocr.server");
+        const g = await geminiOcr(`${SYSTEM}\n\nKnown parties: ${data.parties.join("; ") || "none"}\nKnown products: ${data.products.join("; ") || "none"}\nKnown vehicles: ${data.vehicles.join("; ") || "none"}\n\nReturn ONLY JSON with keys date, partyName, vehicle, product, litres, amount, rate (null when not visible).`, data.image);
+        if (!g.text) return { error: g.error ?? "Could not read slip" };
+        try { return { result: JSON.parse(g.text.replace(/^```(json)?|```$/g, "").trim()) as OcrResult }; } catch { return { error: "Could not read slip" }; }
+      }
+      return { error: `Could not read slip (${res.status})` };
     }
     const reader = res.body.getReader(); const dec = new TextDecoder();
     let buf = "", text = "", err = "";

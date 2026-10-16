@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Shell, inputCls, btnCls } from "@/components/Shell";
 import { useParties, useProducts, useVehicles, fmtDate, inr, todayISO, rateOn } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { GeminiMaster } from "@/components/GeminiMaster";
 
 export const Route = createFileRoute("/parties")({
   head: () => ({
@@ -22,11 +23,11 @@ export const Route = createFileRoute("/parties")({
 const smBtn = "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold";
 
 function Masters() {
-  const [tab, setTab] = useState<"party" | "product" | "vehicle">("party");
+  const [tab, setTab] = useState<"party" | "product" | "vehicle" | "gemini">("party");
   return (
     <Shell title="Masters">
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1">
-        {([["party", "Party", "solar:users-group-rounded-bold-duotone"], ["product", "Product & Rate", "solar:tag-price-bold-duotone"], ["vehicle", "Vehicle", "solar:bus-bold-duotone"]] as const).map(([k, l, ic]) => (
+      <div className="grid grid-cols-4 gap-1 rounded-xl bg-muted p-1">
+        {([["party", "Party", "solar:users-group-rounded-bold-duotone"], ["product", "Product & Rate", "solar:tag-price-bold-duotone"], ["vehicle", "Vehicle", "solar:bus-bold-duotone"], ["gemini", "Gemini API", "solar:key-bold-duotone"]] as const).map(([k, l, ic]) => (
           <button key={k} onClick={() => setTab(k)}
             className={`flex flex-col items-center gap-1 rounded-lg py-2 text-xs font-bold sm:flex-row sm:justify-center sm:text-sm ${tab === k ? "bg-card text-foreground shadow-card" : "text-muted-foreground"}`}><Icon icon={ic} className="h-5 w-5" />{l}</button>
         ))}
@@ -34,6 +35,7 @@ function Masters() {
       {tab === "party" && <PartyMaster />}
       {tab === "product" && <ProductMaster />}
       {tab === "vehicle" && <VehicleMaster />}
+      {tab === "gemini" && <GeminiMaster />}
     </Shell>
   );
 }
